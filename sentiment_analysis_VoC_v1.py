@@ -196,26 +196,23 @@ if filename is not None:
     st.markdown("4. " +str(neg['brand'][4]) +"| Negative | Sentiment Score: " +str(neg['score'][4]) + " - " + str(neg['body'][4]))
     st.markdown("5. " +str(neg['brand'][5]) +"| Negative | Sentiment Score: " +str(neg['score'][5]) + " - " + str(neg['body'][5]))
     
+    # ----------------------------------------------------
+# Top 5 positive and negative reviews for HUAWEI and Samsung
+
+for brand in ["HUAWEI", "Samsung"]:
     st.markdown("------------------------------------------------------------------------------------")
-    st.subheader("Top 5 positive reviews for HUAWEI :")
+    st.subheader(f"Top 5 positive reviews for {brand}:")
 
-    pos = data[(data['brand'] == 'HUAWEI') & (data['score'] > .9)].reset_index()
-    pos = pos.sort_values(['score'],ascending=False)
-    st.write("1. " +str(pos['brand'][6]) +"| Positive | Sentiment Score: " +str(pos['score'][6]) + " - " + str(pos['body'][6]))
-    st.write("2. " +str(pos['brand'][7]) +"| Positive | Sentiment Score: " +str(pos['score'][7]) + " - " + str(pos['body'][7]))
-    st.write("3. " +str(pos['brand'][8]) +"| Positive | Sentiment Score: " +str(pos['score'][8]) + " - " + str(pos['body'][8]))
-    st.write("4. " +str(pos['brand'][9]) +"| Positive | Sentiment Score: " +str(pos['score'][9]) + " - " + str(pos['body'][9]))
-    st.write("5. " +str(pos['brand'][10]) +"| Positive | Sentiment Score: " +str(pos['score'][10]) + " - " + str(pos['body'][10]))
-
+    pos = data[(data['brand'] == brand) & (data['score'] > 0.9)].sort_values('score', ascending=False).head(5).reset_index()
+    for i, row in pos.iterrows():
+        st.write(f"{i+1}. {row['brand']} | Positive | Sentiment Score: {row['score']:.2f} - {row['body']}")
 
     st.markdown("------------------------------------------------------------------------------------")
-    st.subheader("Top 5 negative reviews for HUAWEI :")
+    st.subheader(f"Top 5 negative reviews for {brand}:")
 
-    neg = data[(data['brand'] == 'HUAWEI') & (data['score'] < .1)].reset_index()
-    st.markdown("1. " +str(neg['brand'][1]) +"| Negative | Sentiment Score: " +str(neg['score'][1]) + " - " + str(neg['body'][1]))
-    st.markdown("2. " +str(neg['brand'][2]) +"| Negative | Sentiment Score: " +str(neg['score'][2]) + " - " + str(neg['body'][2]))
-    st.markdown("3. " +str(neg['brand'][3]) +"| Negative | Sentiment Score: " +str(neg['score'][3]) + " - " + str(neg['body'][3]))
-    st.markdown("4. " +str(neg['brand'][4]) +"| Negative | Sentiment Score: " +str(neg['score'][4]) + " - " + str(neg['body'][4]))
-    st.markdown("5. " +str(neg['brand'][5]) +"| Negative | Sentiment Score: " +str(neg['score'][5]) + " - " + str(neg['body'][5]))
+    neg = data[(data['brand'] == brand) & (data['score'] < 0.1)].sort_values('score', ascending=True).head(5).reset_index()
+    for i, row in neg.iterrows():
+        st.write(f"{i+1}. {row['brand']} | Negative | Sentiment Score: {row['score']:.2f} - {row['body']}")
+
     
     
