@@ -98,7 +98,6 @@ if filename is not None:
 
     with col5:
         # st.text("Positive reviews word cloud for Nokia")
-        st.set_option('deprecation.showPyplotGlobalUse', False)
         df = data[(data["sentiment"]=="Positive") & (data["brand"]=="Nokia") & (data['score'] > .9)]
         words = " ".join(df["body1"])
         wordcloud = WordCloud(stopwords=STOPWORDS, background_color="white", width=800, height=640).generate(words)
@@ -110,7 +109,6 @@ if filename is not None:
 
     with col6:        
         # st.text("Negative reviews word cloud for Nokia:")
-        st.set_option('deprecation.showPyplotGlobalUse', False)
         df = data[(data["sentiment"]=="Negative") & (data["brand"]=="Nokia") & (data['score'] <=.2)]
         words = " ".join(df["body1"])
         wordcloud = WordCloud(stopwords=STOPWORDS, background_color="white", width=800, height=640,colormap="RdYlGn").generate(words)
@@ -125,7 +123,6 @@ if filename is not None:
 
     with col7:
         # st.text("Positive reviews word cloud for HUAWEI:")
-        st.set_option('deprecation.showPyplotGlobalUse', False)
         df = data[(data["sentiment"]=="Positive") & (data["brand"]=="HUAWEI") & (data['score'] > .9)]
         words = " ".join(df["body1"])
         wordcloud = WordCloud(stopwords=STOPWORDS, background_color="white", width=800, height=640).generate(words)
@@ -137,7 +134,6 @@ if filename is not None:
 
     with col8:
         # st.text("Negative reviews word cloud for HUAWEI:")
-        st.set_option('deprecation.showPyplotGlobalUse', False)
         df = data[(data["sentiment"]=="Negative") & (data["brand"]=="HUAWEI") & (data['score'] <= .2)]
         words = " ".join(df["body1"])
         wordcloud = WordCloud(stopwords=STOPWORDS, background_color="white", width=800, height=640,colormap="RdYlGn").generate(words)
@@ -151,7 +147,6 @@ if filename is not None:
     
     with col9:
         # st.text("Positive reviews word cloud for Samsung:")
-        st.set_option('deprecation.showPyplotGlobalUse', False)
         df = data[(data["sentiment"]=="Positive") & (data["brand"]=="Samsung") & (data['score'] > .9)]
         words = " ".join(df["body1"])
         wordcloud = WordCloud(stopwords=STOPWORDS, background_color="white", width=800, height=640).generate(words)
@@ -164,7 +159,6 @@ if filename is not None:
 
     with col10:
         # st.text("Negative reviews word cloud for Samsung:")
-        st.set_option('deprecation.showPyplotGlobalUse', False)
         df = data[(data["sentiment"]=="Negative") & (data["brand"]=="Samsung") & (data['score'] <= .2)]
         words = " ".join(df["body1"])
         wordcloud = WordCloud(stopwords=STOPWORDS, background_color="white", width=800, height=640,colormap="RdYlGn").generate(words)
