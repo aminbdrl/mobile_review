@@ -4,8 +4,9 @@ import pandas as pd
 import plotly.express as px
 from wordcloud import WordCloud, STOPWORDS
 import matplotlib.pyplot as plt
-import nltk
 nltk.download('vader_lexicon')
+nltk.download('punkt')
+nltk.download('stopwords')
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 analyzer = SentimentIntensityAnalyzer()
 
