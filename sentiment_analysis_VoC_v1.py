@@ -20,7 +20,7 @@ st.set_page_config(
 
 
 
-st.title("VoC: Sentiment Analysis POC")
+st.title("Know Your Customers: Sentiment Analysis Made Simple")
 st.markdown("------------------------------------------------------------------------------------")
 # asa = st.sidebar.radio('Select company', ('Nokia','Samsung'))
 
