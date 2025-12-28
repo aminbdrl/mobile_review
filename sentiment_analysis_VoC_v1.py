@@ -102,7 +102,8 @@ if filename is not None:
 
     with col5:
         # st.text("Positive reviews word cloud for Nokia")
-        st.set_option('deprecation.showPyplotGlobalUse', False)
+       st.plotly_chart(fig, use_container_width=True)
+
         df = data[(data["sentiment"]=="Positive") & (data["brand"]=="Nokia") & (data['score'] > .9)]
         words = " ".join(df["body1"])
         wordcloud = WordCloud(stopwords=STOPWORDS, background_color="white", width=800, height=640).generate(words)
