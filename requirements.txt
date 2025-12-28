@@ -1,7 +1,0 @@
-streamlit
-plotly
-pandas
-numpy
-matplotlib
-wordcloud
-nltk
