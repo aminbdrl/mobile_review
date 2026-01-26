@@ -35,7 +35,7 @@ and evaluates its performance internally. All done **without needing labeled CSV
 # ====================================================
 # 2️⃣ Load Dataset
 # ====================================================
-st.subheader("Step 1: Load Dataset")
+
 uploaded_file = st.file_uploader("Mobile_reviews.csv", type="csv")
 
 if uploaded_file is not None:
@@ -49,7 +49,7 @@ if uploaded_file is not None:
     # ====================================================
     # 3️⃣ Text Cleaning
     # ====================================================
-    st.subheader("Step 2: Text Cleaning")
+
     def clean_text(text):
         text = text.lower()
         text = re.sub(r"http\S+|www\S+", "", text)
