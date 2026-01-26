@@ -63,7 +63,7 @@ if uploaded_file is not None:
     # ====================================================
     # 4️⃣ Generate Pseudo Labels (VADER)
     # ====================================================
-    st.subheader("Step 3: Generate Pseudo Labels (VADER)")
+  
     sia = SentimentIntensityAnalyzer()
 
     def vader_label(text):
@@ -83,7 +83,7 @@ if uploaded_file is not None:
     # ====================================================
     # 5️⃣ Train Naive Bayes Model
     # ====================================================
-    st.subheader("Step 4: Train ML Model")
+  
     X = df["clean_body"]
     y_true = df["true_sentiment"]
 
@@ -103,7 +103,7 @@ if uploaded_file is not None:
     # ====================================================
     # 6️⃣ Evaluation Metrics
     # ====================================================
-    st.subheader("Step 5: Model Evaluation")
+
 
     accuracy = accuracy_score(y_test, y_pred)
     conf_matrix = confusion_matrix(y_test, y_pred)
