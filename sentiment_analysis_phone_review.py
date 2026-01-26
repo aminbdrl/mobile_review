@@ -1,208 +1,135 @@
-import streamlit as st
-import numpy as np
+# ====================================================
+# 📌 Mobile Reviews Sentiment Analyzer (Full App)
+# ====================================================
+
 import pandas as pd
-import plotly.express as px
-from wordcloud import WordCloud, STOPWORDS
-import matplotlib.pyplot as plt
-import nltk
+import numpy as np
+import re
+import streamlit as st
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+import nltk
+nltk.download("vader_lexicon")
 
-# ===============================
-# NLTK DOWNLOADS
-# ===============================
-nltk.download('vader_lexicon')
-nltk.download('punkt')
-nltk.download('stopwords')
-
-analyzer = SentimentIntensityAnalyzer()
-
-# ===============================
-# PAGE CONFIG
-# ===============================
+# ====================================================
+# 1️⃣ Streamlit Page Config
+# ====================================================
 st.set_page_config(
-    page_title="VoC Sentiment Analysis",
-    page_icon="🕸",
+    page_title="Mobile Reviews Sentiment Analyzer",
     layout="wide"
 )
 
-st.title("Know Your Customers: Sentiment Analysis Made Simple")
-st.markdown("------------------------------------------------------------")
+st.title("📱 Mobile Reviews Sentiment Analysis")
+st.markdown("""
+This app automatically generates **pseudo-labels** using **VADER**, trains a **Naive Bayes ML model**, 
+and evaluates its performance internally. All done **without needing labeled CSVs**.
+""")
 
-# ===============================
-# HELPER FUNCTION
-# ===============================
-def vader_predict(text):
-    score = analyzer.polarity_scores(text)["compound"]
-    return "Positive" if score >= 0.5 else "Negative"
+# ====================================================
+# 2️⃣ Load Dataset
+# ====================================================
+st.subheader("Step 1: Load Dataset")
+uploaded_file = st.file_uploader("Mobile_reviews.csv", type="csv")
 
-# ===============================
-# FILE UPLOAD
-# ===============================
-file = st.sidebar.file_uploader("Mobile_reviews.csv", type=["csv"])
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
+    df = df.dropna(subset=["body"])
+    st.success(f"Dataset loaded: {df.shape[0]} rows")
+    
+    # Show sample
+    st.write(df.head())
 
-if file is not None:
-    data = pd.read_csv(file)
-    data["body"] = data["body"].astype(str)
+    # ====================================================
+    # 3️⃣ Text Cleaning
+    # ====================================================
+    st.subheader("Step 2: Text Cleaning")
+    def clean_text(text):
+        text = text.lower()
+        text = re.sub(r"http\S+|www\S+", "", text)
+        text = re.sub(r"[^a-z\s]", "", text)
+        return text.strip()
 
-    # ===============================
-    # SENTIMENT ANALYSIS
-    # ===============================
-    data["score"] = data["body"].apply(lambda x: analyzer.polarity_scores(x)["compound"])
-    data["sentiment"] = data["score"].apply(lambda x: "Positive" if x >= 0.5 else "Negative")
-    data["date"] = pd.to_datetime(data["date"])
+    df["clean_body"] = df["body"].apply(clean_text)
+    st.write("Sample cleaned text:")
+    st.write(df[["body", "clean_body"]].head())
 
-    # ===============================
-    # SIDEBAR STATS
-    # ===============================
-    st.sidebar.subheader("Review Count by Brand")
-    brand_counts = data["brand"].value_counts()
-    for brand, count in brand_counts.items():
-        st.sidebar.write(f"{brand}: {count}")
+    # ====================================================
+    # 4️⃣ Generate Pseudo Labels (VADER)
+    # ====================================================
+    st.subheader("Step 3: Generate Pseudo Labels (VADER)")
+    sia = SentimentIntensityAnalyzer()
 
-    # ===============================
-    # PIE + TREND (NOKIA)
-    # ===============================
-    st.subheader("Sentiment Distribution & Trend (Nokia)")
-    col1, col2 = st.columns(2)
+    def vader_label(text):
+        score = sia.polarity_scores(text)["compound"]
+        if score >= 0.05:
+            return "Positive"
+        elif score <= -0.05:
+            return "Negative"
+        else:
+            return None
 
-    with col1:
-        nokia = data[data["brand"] == "Nokia"]
-        pie = nokia["sentiment"].value_counts().reset_index()
-        pie.columns = ["Sentiment", "Count"]
-        fig = px.pie(pie, names="Sentiment", values="Count", title="Nokia Sentiment Distribution")
-        st.plotly_chart(fig, use_container_width=True)
+    df["true_sentiment"] = df["clean_body"].apply(vader_label)
+    df = df.dropna(subset=["true_sentiment"])
+    st.write("Label distribution:")
+    st.bar_chart(df["true_sentiment"].value_counts())
 
-    with col2:
-        nokia["Month"] = nokia["date"].dt.strftime("%m-%Y")
-        trend = nokia.groupby(["Month", "sentiment"]).size().reset_index(name="Count")
-        fig2 = px.line(trend, x="Month", y="Count", color="sentiment",
-                       title="Sentiment Trend Over Time (Nokia)")
-        st.plotly_chart(fig2, use_container_width=True)
+    # ====================================================
+    # 5️⃣ Train Naive Bayes Model
+    # ====================================================
+    st.subheader("Step 4: Train ML Model")
+    X = df["clean_body"]
+    y_true = df["true_sentiment"]
 
-    st.markdown("------------------------------------------------------------")
+    vectorizer = TfidfVectorizer(max_features=5000)
+    X_vec = vectorizer.fit_transform(X)
 
-    # ===============================
-    # DISTRIBUTION CHARTS
-    # ===============================
-    col3, col4 = st.columns(2)
-
-    with col3:
-        fig3 = px.histogram(
-            data, x="brand", color="sentiment",
-            title="Sentiment Count by Brand"
-        )
-        st.plotly_chart(fig3, use_container_width=True)
-
-    with col4:
-        percent = data.groupby(["brand", "sentiment"]).size().reset_index(name="Count")
-        total = data.groupby("brand").size().reset_index(name="Total")
-        percent = percent.merge(total, on="brand")
-        percent["Percentage"] = percent["Count"] / percent["Total"]
-
-        fig4 = px.bar(
-            percent, x="brand", y="Percentage", color="sentiment",
-            title="Sentiment Percentage by Brand"
-        )
-        st.plotly_chart(fig4, use_container_width=True)
-
-    st.markdown("------------------------------------------------------------")
-
-    # ===============================
-    # WORD CLOUDS
-    # ===============================
-    st.subheader("Word Clouds by Brand & Sentiment")
-
-    stop_words_custom = [
-        "phone", "amazon", "samsung", "nokia", "huawei", "use", "used",
-        "really", "one", "still", "work", "great", "good"
-    ]
-
-    data["clean_text"] = data["body"].apply(
-        lambda x: " ".join(
-            [w for w in x.lower().split() if w not in stop_words_custom]
-        )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_vec, y_true, test_size=0.2, random_state=42
     )
 
-    for brand in ["Nokia", "HUAWEI", "Samsung"]:
-        col5, col6 = st.columns(2)
+    model = MultinomialNB()
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
 
-        with col5:
-            pos = data[(data["brand"] == brand) & (data["sentiment"] == "Positive")]
-            words = " ".join(pos["clean_text"])
-            wc = WordCloud(background_color="white", width=700, height=400).generate(words)
-            plt.imshow(wc)
-            plt.axis("off")
-            plt.title(f"Positive Word Cloud ({brand})")
-            st.pyplot()
+    st.success("Model trained successfully!")
 
-        with col6:
-            neg = data[(data["brand"] == brand) & (data["sentiment"] == "Negative")]
-            words = " ".join(neg["clean_text"])
-            wc = WordCloud(background_color="white", width=700, height=400, colormap="Reds").generate(words)
-            plt.imshow(wc)
-            plt.axis("off")
-            plt.title(f"Negative Word Cloud ({brand})")
-            st.pyplot()
+    # ====================================================
+    # 6️⃣ Evaluation Metrics
+    # ====================================================
+    st.subheader("Step 5: Model Evaluation")
 
-    st.markdown("------------------------------------------------------------")
+    accuracy = accuracy_score(y_test, y_pred)
+    conf_matrix = confusion_matrix(y_test, y_pred)
+    report = classification_report(y_test, y_pred, output_dict=True)
 
-    # ===============================
-    # TOP REVIEWS
-    # ===============================
-    for brand in ["Nokia", "HUAWEI", "Samsung"]:
-        st.subheader(f"Top 5 Positive Reviews – {brand}")
-        top_pos = data[(data["brand"] == brand) & (data["score"] > 0.9)].sort_values("score", ascending=False).head(5)
-        for i, row in top_pos.iterrows():
-            st.write(f"- ({row['score']:.2f}) {row['body']}")
+    st.metric("Accuracy", f"{accuracy:.2%}")
 
-        st.subheader(f"Top 5 Negative Reviews – {brand}")
-        top_neg = data[(data["brand"] == brand) & (data["score"] < 0.1)].sort_values("score").head(5)
-        for i, row in top_neg.iterrows():
-            st.write(f"- ({row['score']:.2f}) {row['body']}")
+    st.text("Classification Report")
+    st.json(report)
 
-    st.markdown("============================================================")
-    st.subheader("Model Performance Evaluation")
-
-    # ===============================
-    # PERFORMANCE EVALUATION
-    # ===============================
-    eval_file = st.file_uploader(
-        "Upload labeled data for evaluation (CSV with body, true_sentiment):",
-        type="csv"
+    st.text("Confusion Matrix")
+    conf_df = pd.DataFrame(
+        conf_matrix,
+        index=["Actual Negative", "Actual Positive"],
+        columns=["Predicted Negative", "Predicted Positive"]
     )
+    st.write(conf_df)
 
-    if eval_file is not None:
-        eval_df = pd.read_csv(eval_file)
-        eval_df["body"] = eval_df["body"].astype(str)
-        eval_df["predicted_sentiment"] = eval_df["body"].apply(vader_predict)
+    # Heatmap for nicer visualization
+    st.subheader("Confusion Matrix Heatmap")
+    fig, ax = plt.subplots()
+    sns.heatmap(conf_df, annot=True, fmt="d", cmap="Blues", ax=ax)
+    ax.set_ylabel("Actual")
+    ax.set_xlabel("Predicted")
+    st.pyplot(fig)
 
-        y_true = eval_df["true_sentiment"]
-        y_pred = eval_df["predicted_sentiment"]
-
-        acc = accuracy_score(y_true, y_pred)
-        prec = precision_score(y_true, y_pred, pos_label="Positive")
-        rec = recall_score(y_true, y_pred, pos_label="Positive")
-        f1 = f1_score(y_true, y_pred, pos_label="Positive")
-
-        colA, colB, colC, colD = st.columns(4)
-        colA.metric("Accuracy", f"{acc:.2f}")
-        colB.metric("Precision", f"{prec:.2f}")
-        colC.metric("Recall", f"{rec:.2f}")
-        colD.metric("F1-Score", f"{f1:.2f}")
-
-        cm = confusion_matrix(y_true, y_pred, labels=["Positive", "Negative"])
-        cm_df = pd.DataFrame(
-            cm,
-            index=["Actual Positive", "Actual Negative"],
-            columns=["Predicted Positive", "Predicted Negative"]
-        )
-
-        st.subheader("Confusion Matrix")
-        fig_cm, ax = plt.subplots()
-        sns.heatmap(cm_df, annot=True, fmt="d", cmap="Blues", ax=ax)
-        plt.xlabel("Predicted")
-        plt.ylabel("Actual")
-        st.pyplot(fig_cm)
+    st.success("✅ Internal evaluation complete. Metrics are based on pseudo VADER labels.")
+else:
+    st.info("Upload a CSV file to start analysis. Make sure it contains a 'body' column.")
